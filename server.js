@@ -1,8 +1,7 @@
 const express = require('express')
-const app = express()
 const db = require("better-sqlite3")("ourApp.db")
 db.pragma("journal_mode = WAL")
-
+const app = express()
 //db set up start
 
 
@@ -52,5 +51,6 @@ app.post("/register", (req,res) =>{
         
     }
     //save the new user to the Db and log in the user by giving them the session cookie
+    //log the user in by giving a cookie
 })
 app.listen(3000)
