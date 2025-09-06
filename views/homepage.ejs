@@ -13,7 +13,12 @@
     <header>
       <h2><a href="/"> Ron can Dev</a></h2>
       <nav>
-        <a href="/login">Log In</a>
+        <% if (user) {%>
+          <a href="/create-post">Create Post</a>
+          <a href="/logout">Logout</a>
+        <% }else { %>
+          <a href="/login">Log In</a>
+        <% } %>
       </nav>
     </header>
 

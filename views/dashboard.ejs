@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+      <title>HTML 5 Boilerplate</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <!-- <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.css"> -->
+     <!-- <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.css"> -->
+  </head>
+  <body>
+    <header>
+      <h2><a href="/"> Ron can Dev</a></h2>
+      <nav>
+        <% if (user) {%>
+          <a href="/create-post">Create Post</a>
+          <a href="/logout">Logout</a>
+        <% }else { %>
+          <a href="/login">Log In</a>
+        <% } %>
+      </nav>
+    </header>
+
+    <main>
+     <h2>Welcome to the dashboard</h2>
+     <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet est eos tempora quam facilis excepturi consequatur illum aliquam nulla qui? Id ullam atque similique numquam animi rem temporibus libero possimus?</p>
+    </main>
+    <footer>
+      <small>&copy; Ron can dev</small>
+    </footer>
+    <script src="index.js"></script>
+  </body>
+</html>
