@@ -4,12 +4,21 @@
   <body>
     <%- include('includes/header')%>
 
-
     <main>
-     <h2>Welcome to the dashboard</h2>
-     <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Amet est eos tempora quam facilis excepturi consequatur illum aliquam nulla qui? Id ullam atque similique numquam animi rem temporibus libero possimus?</p>
+      <h2>Welcome to the dashboard</h2>
+
+      <ul>
+        <% posts.forEach(post =>{ %>
+        <li>
+          <a href="/posts/<%= post.id %>"> <%=post.title%>: on --<%= new Date(post.createDate).getMonth()+1%> /<%= new
+            Date(post.createDate).getDate() %> /<%= new
+            Date(post.createDate).getFullYear() %>
+          </a>
+        </li>
+        <% })%>
+      </ul>
     </main>
-   <%- include('includes/footer')%>
+    <%- include('includes/footer')%>
     <script src="index.js"></script>
   </body>
 </html>

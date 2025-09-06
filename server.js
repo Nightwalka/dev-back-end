@@ -21,7 +21,7 @@ const createTable = db.transaction(() => {
   ).run();
   db.prepare(
     `
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS posts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       createDate TEXT ,
       title STRING NOT NULL,
@@ -60,8 +60,10 @@ app.get("/login", (req, res) => {
 });
 app.get("/", (req, res) => {
   // Check if req.user exists and has a userid property
-  if (req.user && req.user.userid) {
-    return res.render("dashboard");
+  if (req.user) {
+    const postsStaement = db.prepare("SELECT * FROM posts WHERE authorid = ?");
+    const posts = postsStaement.all(req.user.userid);
+    return res.render("dashboard", { posts });
   }
   res.render("homepage");
 });
@@ -70,20 +72,89 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
+app.get("/edit-post/:id",mustBeLoggedIn,(req, res) => {
+  //look up the post in question
+  const statement = db.prepare("SELECT * FROM posts WHERE id = ?");
+  const post = statement.get(req.params.id);
+  //if post not existing
+  if (!post) {
+    return res.redirect("/");
+  }
+  //if not thhe auth go to home
+  if (post.authorid !== req.user.userid) {
+    return res.redirect("/");
+  }
+  //otherwise ,render the edit post
+  res.render("edit-post", { post });
+});
+app.post("/edit-post/:id", mustBeLoggedIn,(req, res) => {
+  //look up the post in question
+  const statement = db.prepare("SELECT * FROM posts WHERE id = ?");
+  const post = statement.get(req.params.id);
+  //if post not existing
+  if (!post) {
+    return res.redirect("/");
+  }
+  //if not thhe auth go to home
+  if (post.authorid !== req.user.userid) {
+    return res.redirect("/");
+  }
+  //otherwise ,render the edit post
+  const errors = sharedPostValidation(req);
+
+  if (errors.length) {
+    return res.render("edit-post", { errors });
+  }
+  const updateStatement = db.prepare(
+    "UPDATE posts SET title =? ,body =? WHERE id =?"
+  );
+  updateStatement.run(req.body.title, req.body.body, req.params.id);
+
+  res.redirect(`/posts/${req.params.id}`);
+});
+
+app.post("/delete-post/:id",mustBeLoggedIn,(req,res)=>{
+    //look up the post in question
+  const statement = db.prepare("SELECT * FROM posts WHERE id = ?");
+  const post = statement.get(req.params.id);
+  //if post not existing
+  if (!post) {
+    return res.redirect("/");
+  }
+  //if not thhe auth go to home
+  if (post.authorid !== req.user.userid) {
+    return res.redirect("/");
+  }
+  const deleteStatement = db.prepare("DELETE FROM posts WHERE id =?")
+  deleteStatement.run(req.params.id)
+  res.redirect("/")
+})
+
+app.get("/posts/:id", (req, res) => {
+  const statement = db.prepare(
+    "SELECT posts.*, users.username  FROM  posts INNER JOIN users ON posts.authorid = users.id WHERE posts.id =?"
+  );
+  const post = statement.get(req.params.id);
+
+  if (!post) {
+    return res.redirect("/");
+  }
+  res.render("single-post", { post });
+});
 app.post("/login", (req, res) => {
   let errors = [];
   if (typeof req.body.username !== "string") req.body.username = "";
   if (typeof req.body.password !== "string") req.body.password = "";
 
   if (req.body.username.trim() == "") errors = ["Invalid username or password"];
-  if (req.body.passord == "") errors = ["Invalid username or password"];
+  if (req.body.password == "") errors = ["Invalid username or password"];
 
   if (errors.length) {
     return res.render("login", { errors });
   }
 
   const userInQuestionStatement = db.prepare(
-    "SELECT * FROM  users WHERE USERNAME =?"
+    "SELECT * FROM  users WHERE username =?"
   );
   const userInQuestion = userInQuestionStatement.get(req.body.username);
 
@@ -123,7 +194,9 @@ app.post("/login", (req, res) => {
 });
 function mustBeLoggedIn(req, res, next) {
   if (req.user) {
-    return next();
+    next(); // If logged in, continue
+  } else {
+    res.redirect("/"); // If not logged in, redirect them
   }
 }
 app.get("/create-post", mustBeLoggedIn, (req, res) => {
@@ -157,9 +230,22 @@ app.post("/create-post", (req, res) => {
     return res.render("create-post");
   }
   //save to db
+  const ourStatement = db.prepare(
+    "INSERT INTO posts (title,body,authorid,createDate) VALUES (?,?,?,?) "
+  );
+  const result = ourStatement.run(
+    req.body.title,
+    req.body.body,
+    req.user.userid,
+    new Date().toISOString()
+  );
+  const getPostStatement = db.prepare("SELECT * FROM posts WHERE ROWID = ?");
+  const realPost = getPostStatement.get(result.lastInsertRowid);
+
+  res.redirect(`/posts/${realPost.id}`);
 });
 
-app.post("/register", mustBeLoggedIn, (req, res) => {
+app.post("/register", (req, res) => {
   const errors = [];
   if (typeof req.body.username !== "string") req.body.username = "";
   if (typeof req.body.password !== "string") req.body.password = "";
@@ -176,7 +262,7 @@ app.post("/register", mustBeLoggedIn, (req, res) => {
 
   //checej if the user name already exists \
   const usernameStatement = db.prepare("SELECT * FROM users WHERE username= ?");
-  const usernameCheck = usernameStatement.get("req.body.username");
+  const usernameCheck = usernameStatement.get(req.body.username);
   if (usernameCheck) errors.push("That is already taken");
 
   if (!req.body.password) errors.push("You must provide a user name ");
