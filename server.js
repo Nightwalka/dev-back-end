@@ -72,7 +72,7 @@ app.get("/logout", (req, res) => {
   res.redirect("/");
 });
 
-app.get("/edit-post/:id",mustBeLoggedIn,(req, res) => {
+app.get("/edit-post/:id", mustBeLoggedIn, (req, res) => {
   //look up the post in question
   const statement = db.prepare("SELECT * FROM posts WHERE id = ?");
   const post = statement.get(req.params.id);
@@ -84,10 +84,11 @@ app.get("/edit-post/:id",mustBeLoggedIn,(req, res) => {
   if (post.authorid !== req.user.userid) {
     return res.redirect("/");
   }
+
   //otherwise ,render the edit post
   res.render("edit-post", { post });
 });
-app.post("/edit-post/:id", mustBeLoggedIn,(req, res) => {
+app.post("/edit-post/:id", mustBeLoggedIn, (req, res) => {
   //look up the post in question
   const statement = db.prepare("SELECT * FROM posts WHERE id = ?");
   const post = statement.get(req.params.id);
@@ -113,8 +114,8 @@ app.post("/edit-post/:id", mustBeLoggedIn,(req, res) => {
   res.redirect(`/posts/${req.params.id}`);
 });
 
-app.post("/delete-post/:id",mustBeLoggedIn,(req,res)=>{
-    //look up the post in question
+app.post("/delete-post/:id", mustBeLoggedIn, (req, res) => {
+  //look up the post in question
   const statement = db.prepare("SELECT * FROM posts WHERE id = ?");
   const post = statement.get(req.params.id);
   //if post not existing
@@ -125,10 +126,10 @@ app.post("/delete-post/:id",mustBeLoggedIn,(req,res)=>{
   if (post.authorid !== req.user.userid) {
     return res.redirect("/");
   }
-  const deleteStatement = db.prepare("DELETE FROM posts WHERE id =?")
-  deleteStatement.run(req.params.id)
-  res.redirect("/")
-})
+  const deleteStatement = db.prepare("DELETE FROM posts WHERE id =?");
+  deleteStatement.run(req.params.id);
+  res.redirect("/");
+});
 
 app.get("/posts/:id", (req, res) => {
   const statement = db.prepare(
@@ -139,7 +140,8 @@ app.get("/posts/:id", (req, res) => {
   if (!post) {
     return res.redirect("/");
   }
-  res.render("single-post", { post });
+  const isAuthor = post.authorid === req.user.userid;
+  res.render("single-post", { post, isAuthor });
 });
 app.post("/login", (req, res) => {
   let errors = [];
